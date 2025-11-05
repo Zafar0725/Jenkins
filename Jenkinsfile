@@ -1,26 +1,26 @@
 pipeline {
   agent any
 
-  triggers { githubPush() }  // listens to GitHub webhook pushes
+  /* Polling trigger (every ~5 min) */
+  triggers { pollSCM('H/5 * * * *') }
 
   options { timestamps() }
+
+  environment {
+    EMAIL_TO = 'you@gmail.com'   // <-- change to your email
+  }
 
   stages {
     stage('Checkout') {
       steps {
-        checkout([$class: 'GitSCM',
-          branches: [[name: '*/main']],
-          userRemoteConfigs: [[
-            url: 'https://github.com/Zafar0725/Jenkins.git',
-            credentialsId: 'github-pat'
-          ]]
-        ])
+        echo '--- CHECKOUT ---'
+        git branch: 'main', url: 'https://github.com/Zafar0725/Jenkins.git'
       }
     }
 
     stage('Build') {
       steps {
-        echo 'Simulating build...'
+        echo '--- BUILD ---'
         script {
           if (isUnix()) {
             sh 'echo "Build step: compiling (simulated)"'
@@ -33,21 +33,50 @@ pipeline {
 
     stage('Test') {
       steps {
-        echo 'Running tests...'
+        echo '--- TEST ---'
         script {
           if (isUnix()) {
-            sh 'echo "All tests passed (simulated)"'
+            sh 'echo "Running tests... All tests passed (simulated)"'
           } else {
-            bat 'echo All tests passed (simulated)'
+            bat 'echo Running tests... All tests passed (simulated)'
           }
         }
       }
     }
   }
 
+  /* Notifications */
   post {
-    success { echo '✅ SUCCESS — notifying team (console)' }
-    failure { echo '❌ FAILED — notifying team (console)' }
-    always  { echo "Build complete for commit: ${env.GIT_COMMIT ?: 'N/A'}" }
+    success {
+      echo '✅ SUCCESS — notifying team by email'
+      emailext(
+        to: env.EMAIL_TO,
+        subject: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+        body: """Build Succeeded.
+
+Job: ${env.JOB_NAME}
+Build: #${env.BUILD_NUMBER}
+Branch: ${env.BRANCH_NAME ?: 'main'}
+URL: ${env.BUILD_URL}console
+"""
+      )
+    }
+    failure {
+      echo '❌ FAILURE — notifying team by email'
+      emailext(
+        to: env.EMAIL_TO,
+        subject: "FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+        body: """Build Failed.
+
+Job: ${env.JOB_NAME}
+Build: #${env.BUILD_NUMBER}
+Branch: ${env.BRANCH_NAME ?: 'main'}
+URL (console): ${env.BUILD_URL}console
+"""
+      )
+    }
+    always {
+      echo "Build complete for commit: ${env.GIT_COMMIT ?: 'N/A'}"
+    }
   }
 }
