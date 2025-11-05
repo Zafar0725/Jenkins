@@ -1,9 +1,7 @@
 pipeline {
   agent any
 
-  // Use webhook (recommended). In the Jenkins job, tick:
-  // "GitHub hook trigger for GITScm polling"
-  triggers { githubPush() }
+  triggers { githubPush() }  // listens to GitHub webhook pushes
 
   options { timestamps() }
 
@@ -14,7 +12,7 @@ pipeline {
           branches: [[name: '*/main']],
           userRemoteConfigs: [[
             url: 'https://github.com/Zafar0725/Jenkins.git',
-            credentialsId: 'github-pat' // create this in Jenkins
+            credentialsId: 'github-pat'
           ]]
         ])
       }
