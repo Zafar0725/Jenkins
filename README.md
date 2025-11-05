@@ -1,1 +1,1 @@
-Testing Pool Scm
+Polling test at: <current date/time>
