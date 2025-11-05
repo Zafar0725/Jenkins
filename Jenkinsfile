@@ -7,7 +7,7 @@ pipeline {
   options { timestamps() }
 
   environment {
-    EMAIL_TO = 'you@gmail.com'   // <-- change to your email
+    EMAIL_TO = 'zaaferahmed@gmail.com'   // <-- change to your email
   }
 
   stages {
